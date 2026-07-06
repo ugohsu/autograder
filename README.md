@@ -9,7 +9,6 @@
 ## 必要なもの
 
 - Docker が動く環境
-  - **Docker Desktop は使わないでください**（従業員250人以上・年商1000万ドル以上の組織では有償になるため、大学によっては条件を満たさない可能性があります）
   - **Windows**: WSL2 を導入し、その中に Docker Engine を直接インストール（`curl -fsSL https://get.docker.com | sh`）
   - **Mac**: [Colima](https://github.com/abiosoft/colima) を利用（`brew install colima docker docker-compose` → `colima start`）
 - スキャナ（ScanSnap 等、自動送り対応のもの。片面読み取りで十分）
@@ -87,8 +86,6 @@ ScanSnap 等で、学生の答案をまとめて**1つのPDF**にスキャンし
 ```
 =QUERY(データ範囲, "select 学籍番号, sum(回答) group by 学籍番号 pivot 設問番号", 1)
 ```
-
-（回答を数値で出力しているのは、スプレッドシートの集計関数が文字列を直接扱えないためです）
 
 ### 7. 不要になったバッチを削除する
 
