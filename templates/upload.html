@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block title %}アップロード - 答案採点支援{% endblock %}
+{% block content %}
+<section class="card">
+  <h2>スキャンPDFをアップロード</h2>
+  <p class="hint">1回のアップロードは1バッチ（複数ページ＝複数学生の一括スキャン）として処理されます。</p>
+  <form action="{{ url_for('upload.do_upload') }}" method="post" enctype="multipart/form-data" class="upload-form">
+    <input type="file" name="pdf" accept="application/pdf" required>
+    <input type="text" name="note" placeholder="備忘（例: 2026年度 情報科学I 中間試験）" class="note-input-new">
+    <button type="submit">アップロードして読み取る</button>
+  </form>
+</section>
+
+<section class="card">
+  <h2>過去のアップロード</h2>
+  {% if batches %}
+  <table class="results-table">
+    <thead>
+      <tr><th>ファイル名</th><th>備忘</th><th>アップロード日時</th><th>学生数</th></tr>
+    </thead>
+    <tbody>
+    {% for b in batches %}
+      <tr class="clickable-row" data-href="{{ url_for('batch.view_batch', batch_id=b.id) }}">
+        <td>{{ b.original_filename }}</td>
+        <td class="no-navigate">
+          <input type="text" class="batch-note-input" value="{{ b.note or '' }}"
+                 placeholder="（未設定）" data-batch-id="{{ b.id }}">
+          <span class="save-status"></span>
+        </td>
+        <td>{{ b.uploaded_at }}</td>
+        <td>{{ b.student_count }}</td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <p class="hint">まだアップロードはありません。</p>
+  {% endif %}
+</section>
+{% endblock %}
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/batch.js') }}"></script>
+{% endblock %}

@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% block title %}AIインポート - {{ batch.original_filename }}{% endblock %}
+{% block content %}
+{% include "_batch_tabs.html" %}
+<a class="back-link" href="{{ url_for('batch.view_batch', batch_id=batch.id) }}">← 答案一覧に戻る</a>
+
+<section class="card">
+  <h2>{{ batch.original_filename }} / 正答キーのAIインポート</h2>
+  <p class="hint">
+    問題冊子・正答一覧・配点表などをチャット型AIに渡し、
+    <a href="{{ url_for('answer_key.spec_page') }}" target="_blank" rel="noopener">AIインポート仕様書</a>
+    （別タブで開きます）と合わせて読み込ませると、ここに貼り付ける <code>answer_key</code> のJSONを作成してもらえます。
+  </p>
+</section>
+
+<div id="alert-box"></div>
+
+<section class="card" id="step-input">
+  <div class="card-header"><h3>① JSONを貼り付け／ファイル選択</h3></div>
+  <div class="field-row">
+    <input type="file" id="json-file" accept=".json">
+    <a href="#" id="btn-sample">サンプルを表示</a>
+  </div>
+  <div class="field">
+    <label for="json-input">JSON（<code>answer_key</code> 配列）</label>
+    <textarea id="json-input" rows="14" spellcheck="false" class="json-textarea"
+      placeholder='{"answer_key": [...]}'></textarea>
+  </div>
+  <div class="field-row">
+    <button type="button" class="button" id="btn-preview">プレビュー</button>
+    <button type="button" class="button-secondary" id="btn-clear">クリア</button>
+  </div>
+</section>
+
+<section class="card" id="step-preview" style="display:none">
+  <div class="card-header">
+    <h3>② プレビュー・確認</h3>
+    <span class="hint" id="preview-summary"></span>
+  </div>
+  <div class="field-row">
+    <button type="button" class="button-secondary" id="btn-check-all">全選択</button>
+    <button type="button" class="button-secondary" id="btn-uncheck-all">全解除</button>
+    <button type="button" class="button" id="btn-commit">インポート実行</button>
+  </div>
+  <div id="preview-list"></div>
+</section>
+{% endblock %}
+{% block scripts %}
+<script>window.BATCH_ID = {{ batch.id }};</script>
+<script src="{{ url_for('static', filename='js/batch.js') }}"></script>
+<script src="{{ url_for('static', filename='js/answer_key_import.js') }}"></script>
+{% endblock %}

@@ -1,0 +1,99 @@
+{% extends "base.html" %}
+{% block title %}答案一覧 - {{ batch.original_filename }}{% endblock %}
+{% block content %}
+{% include "_batch_tabs.html" %}
+<section class="card">
+  <h2>{{ batch.original_filename }}</h2>
+  <p class="hint">アップロード日時: {{ batch.uploaded_at }}（{{ batch.dpi }}dpi） / 全 {{ students|length }} 件</p>
+  <div class="field">
+    <label for="batch-note">備忘</label>
+    <input type="text" id="batch-note" class="batch-note-input" value="{{ batch.note or '' }}"
+           placeholder="例: 2026年度 情報科学I 中間試験" data-batch-id="{{ batch.id }}">
+    <span class="save-status"></span>
+  </div>
+  {% if is_graded %}
+  <p class="hint">正答キーが設定されています（満点 {{ batch_max_score }} 点）。正答が未設定の設問は採点対象になりません。</p>
+  {% else %}
+  <p class="hint">この試験にはまだ正答キーが設定されていません。<a href="{{ url_for('answer_key.edit_answer_key', batch_id=batch.id) }}">正答・配点を入力</a>すると得点が表示されます（設定しなくても読み取り結果の確認・CSV出力は利用できます）。</p>
+  {% endif %}
+  <a class="button" href="{{ url_for('batch.export_csv', batch_id=batch.id) }}">CSVダウンロード（tidy形式）</a>
+</section>
+
+<section class="card">
+  <table class="results-table">
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>氏名（手書き）</th>
+        <th>学籍番号（手書き参考）</th>
+        <th>学籍番号（確認・修正）</th>
+        <th>解答の要約</th>
+        {% if is_graded %}<th>得点</th>{% endif %}
+      </tr>
+    </thead>
+    <tbody>
+    {% for s in students %}
+      {% set summary = summaries.get(s.id) %}
+      <tr class="clickable-row {{ 'row-error' if s.error else '' }}"
+          data-href="{{ url_for('batch.student_detail', batch_id=batch.id, student_id=s.id) }}">
+        <td>{{ s.page_index + 1 }}</td>
+        <td>
+          {% if s.has_name_image %}
+          <img src="{{ url_for('batch.student_image', student_id=s.id, kind='name') }}" alt="氏名" class="handwriting-img">
+          {% else %}
+          <span class="hint">画像なし</span>
+          {% endif %}
+        </td>
+        <td>
+          {% if s.has_id_image %}
+          <img src="{{ url_for('batch.student_image', student_id=s.id, kind='id') }}" alt="学籍番号" class="handwriting-img">
+          {% else %}
+          <span class="hint">画像なし</span>
+          {% endif %}
+        </td>
+        <td class="no-navigate">
+          <input type="text" class="student-id-input" value="{{ s.student_id_confirmed or '' }}" data-student-id="{{ s.id }}">
+          <span class="save-status"></span>
+          {% if s.error %}
+          <div class="badge badge-danger" title="{{ s.error }}">読み取り失敗</div>
+          {% endif %}
+        </td>
+        <td class="answer-summary">
+          {% if summary %}
+          <span class="count">{{ summary.answered_count }}/{{ summary.total_count }} 問回答</span>
+          <span class="preview">{{ summary.preview }}{{ '…' if summary.total_count > 5 else '' }}</span>
+          {% if summary.needs_review %}
+          <span class="badge badge-warning">要確認 {{ summary.needs_review }}件</span>
+          {% endif %}
+          {% else %}
+          <span class="hint">―</span>
+          {% endif %}
+        </td>
+        {% if is_graded %}
+        <td class="score-cell">
+          {% if summary %}
+          <span class="score-value">{{ summary.score }} / {{ batch_max_score }}</span>
+          {% else %}
+          <span class="hint">―</span>
+          {% endif %}
+        </td>
+        {% endif %}
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</section>
+
+<section class="card card-danger-zone">
+  <h2>危険な操作</h2>
+  <p class="hint">削除すると学生の読み取り結果・画像・解答もすべて削除され、元に戻せません。</p>
+  <button type="button" class="button-danger" id="btn-delete-batch"
+          data-batch-id="{{ batch.id }}" data-batch-name="{{ batch.original_filename }}">
+    このバッチを削除
+  </button>
+</section>
+{% endblock %}
+{% block scripts %}
+<script>window.BATCH_ID = {{ batch.id }};</script>
+<script src="{{ url_for('static', filename='js/batch.js') }}"></script>
+{% endblock %}

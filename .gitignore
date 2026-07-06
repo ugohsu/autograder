@@ -1,0 +1,32 @@
+# Python
+__pycache__/
+**/__pycache__/
+*.pyc
+.venv/
+
+# 環境変数（.env.example のみ共有し、実際の秘密鍵等が入る .env は除外）
+.env
+
+# LaTeX ビルド副産物（.pdf は成果物として含める）
+*.aux
+*.log
+*.synctex.gz
+*.fls
+*.fdb_latexmk
+
+# 採点データ（各教員のローカル環境で完結させる。DBやスキャン画像BLOBは共有しない）
+data/*
+!data/.gitignore
+
+# テスト用スキャンPDF（個人のローカル動作確認用データ）
+scans/
+
+# Claude Code 関連（開発者個人の作業ログ・設定。他の教員への共有物には不要）
+.claude/
+CLAUDE.md
+
+# 開発者個人のDropbox同期に関する内部資料
+dropbox-sync-guide.md
+
+# OS
+.DS_Store

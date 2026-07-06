@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% block title %}解答用紙編集・ダウンロード - 答案採点支援{% endblock %}
+{% block content %}
+<section class="card">
+  <h2>解答用紙の作成</h2>
+  <p class="hint">
+    試験ごとに試験名・実施日・担当教員名を入力して解答用紙PDFを作成できます。
+    すべて任意項目です（未入力でも汎用の解答用紙としてダウンロードできます）。
+  </p>
+  <form action="{{ url_for('answersheet.create_answersheet') }}" method="post" class="field-row">
+    <div class="field">
+      <label for="exam_name">試験名</label>
+      <input type="text" id="exam_name" name="exam_name" placeholder="例: 2026年度 情報科学I 期末試験">
+    </div>
+    <div class="field">
+      <label for="exam_date">実施日</label>
+      <input type="date" id="exam_date" name="exam_date">
+    </div>
+    <div class="field">
+      <label for="teacher_name">担当教員名</label>
+      <input type="text" id="teacher_name" name="teacher_name" placeholder="例: 山田太郎">
+    </div>
+    <div class="field" style="justify-content:flex-end">
+      <button type="submit" class="button">作成</button>
+    </div>
+  </form>
+</section>
+
+<section class="card">
+  <h2>作成済みの解答用紙</h2>
+  {% if sheets %}
+  <table class="results-table">
+    <thead>
+      <tr><th>試験名</th><th>実施日</th><th>担当</th><th>作成日時</th><th>ダウンロード</th></tr>
+    </thead>
+    <tbody>
+    {% for s in sheets %}
+      <tr class="clickable-row" data-href="{{ url_for('answersheet.answersheet_detail', sheet_id=s.id) }}">
+        <td>{{ s.exam_name or '（無題）' }}</td>
+        <td>{{ s.exam_date or '―' }}</td>
+        <td>{{ s.teacher_name or '―' }}</td>
+        <td>{{ s.created_at }}</td>
+        <td class="no-navigate">
+          <a class="button-secondary" href="{{ url_for('answersheet.download_answersheet', sheet_id=s.id) }}">PDFダウンロード</a>
+        </td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <p class="hint">まだ解答用紙はありません。</p>
+  {% endif %}
+</section>
+{% endblock %}
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/batch.js') }}"></script>
+{% endblock %}

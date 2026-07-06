@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+{% block title %}解答詳細 #{{ student.page_index + 1 }} - {{ batch.original_filename }}{% endblock %}
+{% block content %}
+{% include "_batch_tabs.html" %}
+<a class="back-link" href="{{ url_for('batch.view_batch', batch_id=batch.id) }}">← 答案一覧に戻る</a>
+
+<section class="card">
+  <h2>{{ batch.original_filename }} / #{{ student.page_index + 1 }}</h2>
+  {% if student.error %}
+  <p><span class="badge badge-danger" title="{{ student.error }}">読み取り失敗</span></p>
+  {% endif %}
+  {% if is_graded %}
+  <p class="score-line">得点: <span class="score-value">{{ score }} / {{ batch_max_score }}</span>（{{ correct_count }}問正解）</p>
+  {% endif %}
+  <table class="detail-table">
+    <tr>
+      <th>氏名（手書き）</th>
+      <td>
+        {% if student.has_name_image %}
+        <img src="{{ url_for('batch.student_image', student_id=student.id, kind='name') }}" alt="氏名" class="handwriting-img">
+        {% else %}<span class="hint">画像なし</span>{% endif %}
+      </td>
+    </tr>
+    <tr>
+      <th>学籍番号（手書き参考）</th>
+      <td>
+        {% if student.has_id_image %}
+        <img src="{{ url_for('batch.student_image', student_id=student.id, kind='id') }}" alt="学籍番号" class="handwriting-img">
+        {% else %}<span class="hint">画像なし</span>{% endif %}
+      </td>
+    </tr>
+    <tr>
+      <th>学籍番号（確認・修正）</th>
+      <td>
+        <input type="text" class="student-id-input" value="{{ student.student_id_confirmed or '' }}" data-student-id="{{ student.id }}">
+        <span class="save-status"></span>
+      </td>
+    </tr>
+  </table>
+</section>
+
+<section class="card">
+  <h2>解答一覧</h2>
+  <p class="hint">
+    左: スキャン画像そのもの（実際に塗られたマーク欄）／右: 採用される解答（プルダウンでいつでも修正できます）。
+    黄色い行は、複数マーク検出、または薄い・部分的なマークで自動判定に自信が持てなかった設問です。
+    黄色でなくても、画像を見て違うと思ったら自由に選び直してください。
+    画像を確認した結果「無回答／無効のままで正しい」と判断した場合は、「確認済みにする」を押してください。
+  </p>
+  <div class="question-list">
+  {% for q in questions %}
+    <div class="qrow {{ 'ambiguous' if q.is_ambiguous else '' }}">
+      <span class="qnum">Q{{ q.qnum }}</span>
+      <span class="raw-marks">
+        {% if student.has_canonical %}
+        <img src="{{ url_for('batch.answer_image', batch_id=batch.id, student_id=student.id, question_number=q.qnum) }}"
+             alt="Q{{ q.qnum }}のマーク欄" class="mark-crop-img">
+        {% else %}
+        {% for i in range(1, 6) %}<span class="mark-dot {{ 'filled' if i in q.raw_marked else '' }}">{{ '●' if i in q.raw_marked else '○' }}</span>{% endfor %}
+        {% endif %}
+      </span>
+      <span class="arrow">→</span>
+      <select class="answer-override" data-student-id="{{ student.id }}" data-qnum="{{ q.qnum }}">
+        <option value="" {{ 'selected' if q.option is none else '' }}>無回答</option>
+        {% for i in range(1, 6) %}
+        <option value="{{ i }}" {{ 'selected' if q.option == i else '' }}>{{ option_symbols[i-1] }}</option>
+        {% endfor %}
+      </select>
+      {% if q.is_ambiguous %}
+        {% if q.reviewed %}
+        <span class="resolved-badge">確認済み</span>
+        {% else %}
+        <button type="button" class="btn-confirm-row" data-student-id="{{ student.id }}" data-qnum="{{ q.qnum }}">確認済みにする</button>
+        {% endif %}
+      {% endif %}
+      <span class="save-status"></span>
+      {% if q.is_graded %}
+        {% if q.is_correct %}
+        <span class="badge badge-correct">正解 {% if q.points %}(+{{ q.points }}){% endif %}</span>
+        {% else %}
+        <span class="badge badge-incorrect">不正解（正答: {{ q.correct_symbol }}）</span>
+        {% endif %}
+      {% endif %}
+    </div>
+  {% endfor %}
+  </div>
+</section>
+{% endblock %}
+{% block scripts %}
+<script>window.BATCH_ID = {{ batch.id }};</script>
+<script src="{{ url_for('static', filename='js/batch.js') }}"></script>
+{% endblock %}

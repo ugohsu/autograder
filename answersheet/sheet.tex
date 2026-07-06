@@ -1,0 +1,74 @@
+% 解答用紙テンプレート（A4・片面・80問・5択）
+% 学籍番号10桁（手書き記入＋マーク欄）／氏名（手書きのみ）／四隅レジストレーションマーク
+%
+% 座標系: ページ左上 (current page.north west) を原点とし、
+%         右方向・下方向をそれぞれ mm 単位の正方向とする。
+\documentclass[a4paper]{ltjsarticle}
+\usepackage[a4paper,margin=0mm]{geometry}
+\usepackage{tikz}
+\usetikzlibrary{calc}
+\pagestyle{empty}
+
+\begin{document}
+\begin{tikzpicture}[remember picture, overlay, x=1mm, y=-1mm, line width=0.4pt]
+  \coordinate (O) at (current page.north west);
+
+  % ---------- 位置合わせマーク（四隅・8mm角） ----------
+  \foreach \mx/\my in {10/10, 192/10, 10/279, 192/279} {
+    \fill ($(O)+(\mx,\my)$) rectangle ++(8,8);
+  }
+
+  % ---------- タイトル ----------
+  \node at ($(O)+(105,26)$) {\Large\bfseries 解答用紙};
+  \draw ($(O)+(10,33)$) -- ($(O)+(200,33)$);
+
+  % ---------- 氏名欄（手書きのみ） ----------
+  \node[anchor=west] at ($(O)+(14,44)$) {氏名};
+  \node[anchor=west, font=\scriptsize] at ($(O)+(14,49)$) {（手書き）};
+  \draw ($(O)+(32,37)$) rectangle ($(O)+(200,51)$);
+  \draw ($(O)+(10,55)$) -- ($(O)+(200,55)$);
+
+  % ---------- 学籍番号欄（10桁：上段に記入＋下段でマーク） ----------
+  \node[font=\small] at ($(O)+(105,60)$)
+    {学籍番号（上段に数字を記入し、下のマーク欄を塗りつぶすこと）};
+
+  % 手書き記入用の数字ボックス（10桁、中央揃え）
+  \foreach \dig in {0,...,9} {
+    \pgfmathsetmacro{\bx}{63+\dig*8.5}
+    \draw ($(O)+(\bx,64)$) rectangle ++(7,9);
+  }
+
+  % マーク欄（10桁 × 値0-9 のグリッド）
+  \foreach \dig in {0,...,9} {
+    \pgfmathsetmacro{\cx}{63+\dig*8.5+3.5}
+    \foreach \val in {0,...,9} {
+      \pgfmathsetmacro{\cy}{76+\val*5+2.5}
+      \draw ($(O)+(\cx,\cy)$) circle (2mm);
+      \node[font=\tiny] at ($(O)+(\cx,\cy)$) {\val};
+    }
+  }
+  \draw ($(O)+(10,131)$) -- ($(O)+(200,131)$);
+
+  % ---------- 解答エリア（4列 × 20行 × 5択 = 80問） ----------
+  \foreach \opt/\sym in {0/{①},1/{②},2/{③},3/{④},4/{⑤}} {
+    \foreach \col in {0,...,3} {
+      \pgfmathsetmacro{\X}{14+\col*46.5}
+      \pgfmathsetmacro{\hx}{\X+8+3.25+\opt*6.5}
+      \node[font=\scriptsize] at ($(O)+(\hx,136)$) {\sym};
+    }
+  }
+
+  \foreach \col in {0,...,3} {
+    \pgfmathsetmacro{\X}{14+\col*46.5}
+    \foreach \row in {0,...,19} {
+      \pgfmathsetmacro{\Y}{141.4+\row*6.8}
+      \pgfmathtruncatemacro{\qnum}{\col*20+\row+1}
+      \node[anchor=east, font=\scriptsize] at ($(O)+(\X+7,\Y)$) {\qnum};
+      \foreach \opt in {0,...,4} {
+        \pgfmathsetmacro{\hx}{\X+8+3.25+\opt*6.5}
+        \draw ($(O)+(\hx,\Y)$) circle (2.25mm);
+      }
+    }
+  }
+\end{tikzpicture}
+\end{document}

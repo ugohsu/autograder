@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block title %}AIインポート仕様書 - 答案採点支援{% endblock %}
+{% block content %}
+<div class="page-header">
+  <h2 class="page-title">AIインポート仕様書</h2>
+  <a class="button-secondary" href="{{ url_for('static', filename='docs/answer_key_import_spec.md') }}" download>
+    .mdファイルをダウンロード
+  </a>
+</div>
+<p class="hint">
+  この仕様書は、問題冊子・正答一覧・配点表などとあわせてチャット型AIに渡すためのものです。
+  下のダウンロードボタンから元の .md ファイルを取得し、AIに資料と一緒に渡してください。
+  画面での閲覧用に、以下に内容を読みやすく表示しています。
+</p>
+
+<section class="card spec-card">
+  <div class="markdown-body">
+    {{ spec_html | safe }}
+  </div>
+</section>
+{% endblock %}

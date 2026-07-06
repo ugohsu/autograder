@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block title %}{{ sheet.exam_name or '解答用紙' }} - 答案採点支援{% endblock %}
+{% block content %}
+<a class="back-link" href="{{ url_for('answersheet.list_answersheets') }}">← 解答用紙一覧に戻る</a>
+
+<section class="card">
+  <h2>解答用紙の編集</h2>
+  <div class="field-row">
+    <div class="field">
+      <label for="exam_name">試験名</label>
+      <input type="text" id="exam_name" class="as-input" data-field="exam_name"
+             value="{{ sheet.exam_name or '' }}" placeholder="例: 2026年度 情報科学I 期末試験">
+    </div>
+    <div class="field">
+      <label for="exam_date">実施日</label>
+      <input type="date" id="exam_date" class="as-input" data-field="exam_date" value="{{ sheet.exam_date or '' }}">
+    </div>
+    <div class="field">
+      <label for="teacher_name">担当教員名</label>
+      <input type="text" id="teacher_name" class="as-input" data-field="teacher_name"
+             value="{{ sheet.teacher_name or '' }}" placeholder="例: 山田太郎">
+      <span class="save-status"></span>
+    </div>
+  </div>
+  <a class="button" href="{{ url_for('answersheet.download_answersheet', sheet_id=sheet.id) }}">PDFダウンロード</a>
+</section>
+
+<section class="card card-danger-zone">
+  <h2>危険な操作</h2>
+  <p class="hint">この解答用紙の情報を削除します。すでに印刷・配布済みの用紙には影響しません。元に戻せないので注意してください。</p>
+  <button type="button" class="button-danger" id="btn-delete-answersheet"
+          data-sheet-id="{{ sheet.id }}" data-sheet-name="{{ sheet.exam_name or '（無題）' }}">
+    この解答用紙を削除
+  </button>
+</section>
+{% endblock %}
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/answersheet.js') }}"></script>
+{% endblock %}

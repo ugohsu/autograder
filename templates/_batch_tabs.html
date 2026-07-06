@@ -1,0 +1,8 @@
+<nav class="batch-tabs">
+  <a class="batch-tab {{ 'active' if request.endpoint == 'batch.view_batch' else '' }}"
+     href="{{ url_for('batch.view_batch', batch_id=batch.id) }}">答案一覧</a>
+  <a class="batch-tab {{ 'active' if request.endpoint == 'answer_key.edit_answer_key' else '' }}"
+     href="{{ url_for('answer_key.edit_answer_key', batch_id=batch.id) }}">正答・配点</a>
+  <a class="batch-tab {{ 'active' if request.endpoint == 'answer_key.import_page' else '' }}"
+     href="{{ url_for('answer_key.import_page', batch_id=batch.id) }}">AIインポート</a>
+</nav>

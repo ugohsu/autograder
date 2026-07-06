@@ -1,0 +1,15 @@
+services:
+  app:
+    build: .
+    # ホスト側のユーザーIDで実行する。これをしないとコンテナ内はrootで動き、
+    # ./data 配下に作られるファイル（sqlite DBなど）がroot所有になって
+    # 非rootユーザーからは削除できなくなる（.env で自分のUID/GIDに上書き可能）。
+    user: "${APP_UID:-1000}:${APP_GID:-1000}"
+    restart: unless-stopped
+    ports:
+      # localhostのみに公開（LANに誤って公開しないため）。他の教員・管理者からは見えない。
+      - "127.0.0.1:8000:8000"
+    volumes:
+      - ./data:/app/data
+    env_file:
+      - .env

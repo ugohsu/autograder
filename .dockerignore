@@ -1,0 +1,9 @@
+.venv/
+data/
+scans/
+answersheet/*.aux
+answersheet/*.log
+__pycache__/
+**/__pycache__/
+.git/
+.claude/
