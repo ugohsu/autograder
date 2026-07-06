@@ -12,7 +12,7 @@
   - **Docker Desktop は使わないでください**（従業員250人以上・年商1000万ドル以上の組織では有償になるため、大学によっては条件を満たさない可能性があります）
   - **Windows**: WSL2 を導入し、その中に Docker Engine を直接インストール（`curl -fsSL https://get.docker.com | sh`）
   - **Mac**: [Colima](https://github.com/abiosoft/colima) を利用（`brew install colima docker docker-compose` → `colima start`）
-- スキャナ（ScanSnap 等、両面・自動送り対応のもの）
+- スキャナ（ScanSnap 等、自動送り対応のもの。片面読み取りで十分）
 
 ---
 
