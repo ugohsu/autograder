@@ -111,4 +111,4 @@ ScanSnap 等で、学生の答案をまとめて**1つのPDF**にスキャンし
 
 ## 今後の予定
 
-項目分析（正答率・識別力）や個人成績票PDFの出力など、まだ実装していない機能については [`docs/roadmap.md`](docs/roadmap.md) を参照してください。
+まだ実装していない機能については [`docs/roadmap.md`](docs/roadmap.md) を参照してください。
