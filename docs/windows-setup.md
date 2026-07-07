@@ -61,7 +61,7 @@ wsl --shutdown
 
 3. **アプリケーションの起動**
    ```bash
-   ./start.sh
+   sh start.sh
    ```
 
    `.env` が無い場合は初回起動時に自動生成されます。
@@ -70,5 +70,5 @@ wsl --shutdown
 
 ## トラブルシューティング
 
-* **Docker が動かない場合:** WSL起動直後にDockerデーモンが立ち上がっていない場合があります。その際は `sudo service docker start` を実行してから、再度 `./start.sh` を試してください。
-* **Permission denied と出る場合:** 4の手順（グループ追加とWSL再起動）が正しく完了しているか確認してください。それでも `./start.sh` の実行時に Permission denied が出る場合は、`chmod +x start.sh` を実行してから再度試してください。
+* **Docker が動かない場合:** WSL起動直後にDockerデーモンが立ち上がっていない場合があります。その際は `sudo service docker start` を実行してから、再度 `sh start.sh` を試してください。
+* **Permission denied と出る場合:** 4の手順（グループ追加とWSL再起動）が正しく完了しているか確認してください。
