@@ -63,6 +63,13 @@ document.querySelectorAll(".batch-active-qcount-input").forEach((input) => {
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data.error || "save failed");
+      // 試験詳細ページ（要確認数・得点・CSVボタンの有効/無効など、有効問題番号に
+      // 連動する表示が多数ある）では、その場で全部を書き換える代わりに再読み込みして
+      // 表示を最新の状態に揃える。一覧ページ（試験ごとの行だけ）では不要なので対象外。
+      if (window.BATCH_ID != null && String(window.BATCH_ID) === String(batchId)) {
+        window.location.reload();
+        return;
+      }
       flashStatus(status, "保存済み");
     } catch (e) {
       flashStatus(status, e.message === "save failed" ? "保存失敗" : e.message);

@@ -2,7 +2,21 @@
 {% block title %}解答詳細 #{{ student.page_index + 1 }} - {{ batch.original_filename }}{% endblock %}
 {% block content %}
 {% include "_batch_tabs.html" %}
-<a class="back-link" href="{{ url_for('batch.view_batch', batch_id=batch.id) }}">← 答案一覧に戻る</a>
+<div class="student-nav">
+  <a class="back-link" href="{{ url_for('batch.view_batch', batch_id=batch.id) }}">← 答案一覧に戻る</a>
+  <span class="student-nav-links">
+    {% if prev_student_id %}
+    <a class="back-link" href="{{ url_for('batch.student_detail', batch_id=batch.id, student_id=prev_student_id) }}">← 前の受験生</a>
+    {% else %}
+    <span class="back-link back-link-disabled">← 前の受験生</span>
+    {% endif %}
+    {% if next_student_id %}
+    <a class="back-link" href="{{ url_for('batch.student_detail', batch_id=batch.id, student_id=next_student_id) }}">次の受験生 →</a>
+    {% else %}
+    <span class="back-link back-link-disabled">次の受験生 →</span>
+    {% endif %}
+  </span>
+</div>
 
 <section class="card">
   <h2>{{ batch.original_filename }} / #{{ student.page_index + 1 }}</h2>

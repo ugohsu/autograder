@@ -98,6 +98,15 @@ def student_detail(batch_id, student_id):
         abort(404)
     active_count = effective_question_count(batch)
 
+    ordered_ids = [
+        r["id"] for r in db.execute(
+            "SELECT id FROM students WHERE batch_id = ? ORDER BY page_index", (batch_id,)
+        ).fetchall()
+    ]
+    idx = ordered_ids.index(student_id)
+    prev_student_id = ordered_ids[idx - 1] if idx > 0 else None
+    next_student_id = ordered_ids[idx + 1] if idx < len(ordered_ids) - 1 else None
+
     rows = db.execute(
         "SELECT question_number, option, raw_marked_options, is_ambiguous, reviewed "
         "FROM answers WHERE student_id = ? ORDER BY question_number",
@@ -134,6 +143,7 @@ def student_detail(batch_id, student_id):
         option_symbols=OPTION_SYMBOLS, is_graded=bool(graded),
         score=score, correct_count=correct_count, batch_max_score=batch_max_score,
         active_question_count=active_count,
+        prev_student_id=prev_student_id, next_student_id=next_student_id,
     )
 
 
