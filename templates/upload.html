@@ -12,11 +12,11 @@
 </section>
 
 <section class="card">
-  <h2>過去のアップロード</h2>
+  <h2>試験一覧</h2>
   {% if batches %}
   <table class="results-table">
     <thead>
-      <tr><th>ファイル名</th><th>備忘</th><th>アップロード日時</th><th>学生数</th></tr>
+      <tr><th>ファイル名</th><th>備忘</th><th>有効問題番号</th><th>アップロード日時</th><th>学生数</th></tr>
     </thead>
     <tbody>
     {% for b in batches %}
@@ -25,6 +25,12 @@
         <td class="no-navigate">
           <input type="text" class="batch-note-input" value="{{ b.note or '' }}"
                  placeholder="（未設定）" data-batch-id="{{ b.id }}">
+          <span class="save-status"></span>
+        </td>
+        <td class="no-navigate">
+          Q1〜
+          <input type="number" min="1" max="80" class="batch-active-qcount-input" style="width:4em"
+                 value="{{ b.active_question_count or '' }}" placeholder="80" data-batch-id="{{ b.id }}">
           <span class="save-status"></span>
         </td>
         <td>{{ b.uploaded_at }}</td>

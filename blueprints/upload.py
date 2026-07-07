@@ -23,7 +23,7 @@ def _encode_png(gray_img):
 def index():
     db = get_db()
     batches = db.execute(
-        "SELECT id, original_filename, uploaded_at, note, "
+        "SELECT id, original_filename, uploaded_at, note, active_question_count, "
         "(SELECT COUNT(*) FROM students WHERE students.batch_id = batches.id) AS student_count "
         "FROM batches ORDER BY uploaded_at DESC"
     ).fetchall()

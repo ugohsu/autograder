@@ -50,6 +50,26 @@ document.querySelectorAll(".batch-note-input").forEach((input) => {
   });
 });
 
+document.querySelectorAll(".batch-active-qcount-input").forEach((input) => {
+  input.addEventListener("change", async () => {
+    const batchId = input.dataset.batchId;
+    const status = input.parentElement.querySelector(".save-status");
+    flashStatus(status, "保存中…", 0);
+    try {
+      const res = await fetch(`/batch/${batchId}/active_question_count`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ active_question_count: input.value }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || "save failed");
+      flashStatus(status, "保存済み");
+    } catch (e) {
+      flashStatus(status, e.message === "save failed" ? "保存失敗" : e.message);
+    }
+  });
+});
+
 function markRowReviewed(row) {
   if (!row) return;
   const btn = row.querySelector(".btn-confirm-row");

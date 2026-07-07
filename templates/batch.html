@@ -11,12 +11,45 @@
            placeholder="例: 2026年度 情報科学I 中間試験" data-batch-id="{{ batch.id }}">
     <span class="save-status"></span>
   </div>
+  <div class="field">
+    <label for="batch-active-qcount">有効問題番号</label>
+    Q1〜
+    <input type="number" id="batch-active-qcount" min="1" max="{{ total_questions }}"
+           class="batch-active-qcount-input" style="width:4em"
+           value="{{ batch.active_question_count or '' }}" placeholder="{{ total_questions }}"
+           data-batch-id="{{ batch.id }}">
+    <span class="save-status"></span>
+    <p class="hint">
+      {% if batch.active_question_count and batch.active_question_count < total_questions %}
+      Q{{ active_question_count + 1 }}以降は解答選択・採点・CSV出力の対象外になります。
+      {% else %}
+      未設定の場合は全{{ total_questions }}問が対象になります。
+      {% endif %}
+    </p>
+  </div>
   {% if is_graded %}
   <p class="hint">正答キーが設定されています（満点 {{ batch_max_score }} 点）。正答が未設定の設問は採点対象になりません。</p>
   {% else %}
   <p class="hint">この試験にはまだ正答キーが設定されていません。<a href="{{ url_for('answer_key.edit_answer_key', batch_id=batch.id) }}">正答・配点を入力</a>すると得点が表示されます（設定しなくても読み取り結果の確認・CSV出力は利用できます）。</p>
   {% endif %}
-  <a class="button" href="{{ url_for('batch.export_csv', batch_id=batch.id) }}">CSVダウンロード（tidy形式）</a>
+  <div class="csv-download-group">
+    <a class="button" href="{{ url_for('batch.export_csv', batch_id=batch.id) }}">CSVダウンロード（tidy形式）</a>
+    {% if totals_csv_available %}
+    <a class="button" href="{{ url_for('batch.export_totals_csv', batch_id=batch.id) }}">CSVダウンロード（合計得点）</a>
+    {% else %}
+    <span class="button button-disabled" title="有効範囲（Q1〜Q{{ active_question_count }}）の全設問に正答が設定されると利用できます">CSVダウンロード（合計得点）</span>
+    {% endif %}
+    {% if group_totals_csv_available %}
+    <a class="button" href="{{ url_for('batch.export_group_totals_csv', batch_id=batch.id) }}">CSVダウンロード（大問別得点）</a>
+    {% else %}
+    <span class="button button-disabled" title="有効範囲の全設問に正答・大問番号が設定されると利用できます">CSVダウンロード（大問別得点）</span>
+    {% endif %}
+  </div>
+  {% if not totals_csv_available %}
+  <p class="hint">「合計得点」「大問別得点」形式は、有効範囲（Q1〜Q{{ active_question_count }}）の全設問に正答が設定されると利用できます。</p>
+  {% elif not group_totals_csv_available %}
+  <p class="hint">「大問別得点」形式は、有効範囲の全設問に大問番号も設定されると利用できます。</p>
+  {% endif %}
 </section>
 
 <section class="card">

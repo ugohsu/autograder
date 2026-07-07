@@ -198,6 +198,15 @@ td {
 }
 .button-secondary:hover { background: var(--active-bg); }
 
+.button-disabled {
+  background: var(--border);
+  color: var(--muted);
+  cursor: not-allowed;
+}
+.button-disabled:hover { background: var(--border); }
+
+.csv-download-group { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+
 .upload-form { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
 
 input[type="text"], input[type="file"] {
@@ -293,6 +302,8 @@ input[type="text"]:focus {
 }
 .qrow:nth-child(odd) { background: #fafbfc; }
 .qrow.ambiguous { background: var(--warning-bg); }
+.qrow.inactive { opacity: 0.45; }
+.qrow.inactive select.answer-override { cursor: not-allowed; }
 .qrow .qnum { width: 3.5em; color: var(--muted); font-size: 12.5px; }
 .qrow .raw-marks { width: 9em; letter-spacing: 3px; display: flex; align-items: center; }
 .mark-dot { color: var(--border); }

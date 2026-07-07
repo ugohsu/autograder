@@ -5,11 +5,25 @@ import cv2
 import numpy as np
 from flask import Blueprint, Response, abort, jsonify, render_template, request, send_file
 
-from blueprints.answer_key import get_graded_keys, max_score, score_answers
+from blueprints.answer_key import (
+    TOTAL_QUESTIONS,
+    get_graded_keys,
+    is_fully_graded,
+    is_fully_grouped,
+    load_full_answer_keys,
+    max_score,
+    score_answers,
+)
 from helpers import OPTION_SYMBOLS, get_db
 from pipeline import layout, preprocess
 
 batch_bp = Blueprint("batch", __name__)
+
+
+def effective_question_count(batch):
+    """この試験で有効な設問数（Q1〜この番号まで）。未設定なら全問（TOTAL_QUESTIONS）。"""
+    n = batch["active_question_count"]
+    return n if n is not None else TOTAL_QUESTIONS
 
 
 @batch_bp.get("/batch/<int:batch_id>")
@@ -18,6 +32,7 @@ def view_batch(batch_id):
     batch = db.execute("SELECT * FROM batches WHERE id = ?", (batch_id,)).fetchone()
     if batch is None:
         abort(404)
+    active_count = effective_question_count(batch)
 
     students = db.execute(
         "SELECT id, page_index, student_id_read, student_id_confirmed, error, "
@@ -29,16 +44,20 @@ def view_batch(batch_id):
     rows = db.execute(
         "SELECT s.id AS student_id, a.question_number, a.option, a.is_ambiguous, a.reviewed "
         "FROM answers a JOIN students s ON s.id = a.student_id "
-        "WHERE s.batch_id = ? ORDER BY s.id, a.question_number",
-        (batch_id,),
+        "WHERE s.batch_id = ? AND a.question_number <= ? ORDER BY s.id, a.question_number",
+        (batch_id, active_count),
     ).fetchall()
 
     per_student_rows = {}
     for row in rows:
         per_student_rows.setdefault(row["student_id"], []).append(row)
 
-    graded = get_graded_keys(db, batch_id)
+    graded = {q: v for q, v in get_graded_keys(db, batch_id).items() if q <= active_count}
     batch_max_score = max_score(graded)
+
+    key_rows = load_full_answer_keys(db, batch_id, active_count)
+    totals_csv_available = is_fully_graded(key_rows, active_count)
+    group_totals_csv_available = totals_csv_available and is_fully_grouped(key_rows, active_count)
 
     PREVIEW_N = 5
     summaries = {}
@@ -58,6 +77,9 @@ def view_batch(batch_id):
     return render_template(
         "batch.html", batch=batch, students=students, summaries=summaries,
         is_graded=bool(graded), batch_max_score=batch_max_score,
+        active_question_count=active_count, total_questions=TOTAL_QUESTIONS,
+        totals_csv_available=totals_csv_available,
+        group_totals_csv_available=group_totals_csv_available,
     )
 
 
@@ -74,6 +96,7 @@ def student_detail(batch_id, student_id):
     ).fetchone()
     if batch is None or student is None:
         abort(404)
+    active_count = effective_question_count(batch)
 
     rows = db.execute(
         "SELECT question_number, option, raw_marked_options, is_ambiguous, reviewed "
@@ -81,8 +104,8 @@ def student_detail(batch_id, student_id):
         (student_id,),
     ).fetchall()
 
-    graded = get_graded_keys(db, batch_id)
-    score, correct_count = score_answers(graded, rows)
+    graded = {q: v for q, v in get_graded_keys(db, batch_id).items() if q <= active_count}
+    score, correct_count = score_answers(graded, [r for r in rows if r["question_number"] <= active_count])
     batch_max_score = max_score(graded)
 
     questions = []
@@ -99,6 +122,7 @@ def student_detail(batch_id, student_id):
             "raw_marked": raw_marked,
             "is_ambiguous": bool(row["is_ambiguous"]),
             "reviewed": bool(row["reviewed"]),
+            "is_active": qnum <= active_count,
             "is_graded": key is not None,
             "is_correct": (key is not None and row["option"] == key[0]),
             "correct_symbol": OPTION_SYMBOLS[key[0] - 1] if key is not None else None,
@@ -109,6 +133,7 @@ def student_detail(batch_id, student_id):
         "student_detail.html", batch=batch, student=student, questions=questions,
         option_symbols=OPTION_SYMBOLS, is_graded=bool(graded),
         score=score, correct_count=correct_count, batch_max_score=batch_max_score,
+        active_question_count=active_count,
     )
 
 
@@ -122,6 +147,30 @@ def update_note(batch_id):
     if cur.rowcount == 0:
         abort(404)
     return jsonify({"ok": True, "note": note})
+
+
+@batch_bp.post("/batch/<int:batch_id>/active_question_count")
+def update_active_question_count(batch_id):
+    payload = request.get_json(silent=True) or {}
+    raw_value = payload.get("active_question_count")
+    if raw_value in (None, ""):
+        value = None
+    else:
+        try:
+            value = int(raw_value)
+        except (TypeError, ValueError):
+            return jsonify({"error": "整数で入力してください"}), 400
+        if not (1 <= value <= TOTAL_QUESTIONS):
+            return jsonify({"error": f"1〜{TOTAL_QUESTIONS}で入力してください"}), 400
+
+    db = get_db()
+    cur = db.execute(
+        "UPDATE batches SET active_question_count = ? WHERE id = ?", (value, batch_id)
+    )
+    db.commit()
+    if cur.rowcount == 0:
+        abort(404)
+    return jsonify({"ok": True, "active_question_count": value})
 
 
 @batch_bp.delete("/batch/<int:batch_id>")
@@ -208,25 +257,143 @@ def answer_image(batch_id, student_id, question_number):
 @batch_bp.get("/batch/<int:batch_id>/export.csv")
 def export_csv(batch_id):
     db = get_db()
+    batch = db.execute("SELECT * FROM batches WHERE id = ?", (batch_id,)).fetchone()
+    if batch is None:
+        abort(404)
+    active_count = effective_question_count(batch)
+    graded = {q: v for q, v in get_graded_keys(db, batch_id).items() if q <= active_count}
+
     rows = db.execute(
         "SELECT s.student_id_confirmed AS student_id, a.question_number, a.option "
         "FROM answers a JOIN students s ON s.id = a.student_id "
-        "WHERE s.batch_id = ? ORDER BY s.id, a.question_number",
-        (batch_id,),
+        "WHERE s.batch_id = ? AND a.question_number <= ? ORDER BY s.id, a.question_number",
+        (batch_id, active_count),
     ).fetchall()
 
     buf = io.StringIO()
     writer = csv.writer(buf)
-    writer.writerow(["student_id", "question_number", "answer"])
+    header = ["student_id", "question_number", "answer"]
+    if graded:
+        header.append("score")
+    writer.writerow(header)
     for row in rows:
-        writer.writerow([
+        line = [
             row["student_id"],
             row["question_number"],
             row["option"] if row["option"] is not None else "",
-        ])
+        ]
+        if graded:
+            key = graded.get(row["question_number"])
+            if key is None:
+                line.append("")
+            else:
+                correct_option, points = key
+                line.append(points if row["option"] == correct_option else 0)
+        writer.writerow(line)
 
     return Response(
         buf.getvalue(),
         mimetype="text/csv",
         headers={"Content-Disposition": f"attachment; filename=batch_{batch_id}_answers.csv"},
+    )
+
+
+@batch_bp.get("/batch/<int:batch_id>/export_totals.csv")
+def export_totals_csv(batch_id):
+    db = get_db()
+    batch = db.execute("SELECT * FROM batches WHERE id = ?", (batch_id,)).fetchone()
+    if batch is None:
+        abort(404)
+    active_count = effective_question_count(batch)
+
+    key_rows = load_full_answer_keys(db, batch_id, active_count)
+    if not is_fully_graded(key_rows, active_count):
+        return jsonify({
+            "error": "有効範囲の全設問に正答が設定されていないため、このフォーマットはダウンロードできません"
+        }), 400
+    graded = {
+        q: (r["correct_option"], r["points"] if r["points"] is not None else 1.0)
+        for q, r in key_rows.items()
+    }
+
+    students = db.execute(
+        "SELECT id, student_id_confirmed FROM students WHERE batch_id = ? ORDER BY id",
+        (batch_id,),
+    ).fetchall()
+    rows = db.execute(
+        "SELECT s.id AS student_id, a.question_number, a.option "
+        "FROM answers a JOIN students s ON s.id = a.student_id "
+        "WHERE s.batch_id = ? AND a.question_number <= ?",
+        (batch_id, active_count),
+    ).fetchall()
+    per_student_rows = {}
+    for row in rows:
+        per_student_rows.setdefault(row["student_id"], []).append(row)
+
+    buf = io.StringIO()
+    writer = csv.writer(buf)
+    writer.writerow(["student_id", "total_score"])
+    for s in students:
+        score, _ = score_answers(graded, per_student_rows.get(s["id"], []))
+        writer.writerow([s["student_id_confirmed"] or "", score])
+
+    return Response(
+        buf.getvalue(),
+        mimetype="text/csv",
+        headers={"Content-Disposition": f"attachment; filename=batch_{batch_id}_totals.csv"},
+    )
+
+
+@batch_bp.get("/batch/<int:batch_id>/export_group_totals.csv")
+def export_group_totals_csv(batch_id):
+    db = get_db()
+    batch = db.execute("SELECT * FROM batches WHERE id = ?", (batch_id,)).fetchone()
+    if batch is None:
+        abort(404)
+    active_count = effective_question_count(batch)
+
+    key_rows = load_full_answer_keys(db, batch_id, active_count)
+    if not (is_fully_graded(key_rows, active_count) and is_fully_grouped(key_rows, active_count)):
+        return jsonify({
+            "error": "有効範囲の全設問に正答・大問が設定されていないため、このフォーマットはダウンロードできません"
+        }), 400
+
+    groups = sorted({key_rows[q]["group_number"] for q in range(1, active_count + 1)})
+    qnum_to_group = {q: key_rows[q]["group_number"] for q in range(1, active_count + 1)}
+    qnum_to_key = {
+        q: (key_rows[q]["correct_option"], key_rows[q]["points"] if key_rows[q]["points"] is not None else 1.0)
+        for q in range(1, active_count + 1)
+    }
+
+    students = db.execute(
+        "SELECT id, student_id_confirmed FROM students WHERE batch_id = ? ORDER BY id",
+        (batch_id,),
+    ).fetchall()
+    rows = db.execute(
+        "SELECT s.id AS student_id, a.question_number, a.option "
+        "FROM answers a JOIN students s ON s.id = a.student_id "
+        "WHERE s.batch_id = ? AND a.question_number <= ?",
+        (batch_id, active_count),
+    ).fetchall()
+    per_student_rows = {}
+    for row in rows:
+        per_student_rows.setdefault(row["student_id"], []).append(row)
+
+    buf = io.StringIO()
+    writer = csv.writer(buf)
+    writer.writerow(["student_id"] + [f"group_{g}" for g in groups] + ["total_score"])
+    for s in students:
+        group_scores = {g: 0.0 for g in groups}
+        for r in per_student_rows.get(s["id"], []):
+            correct_option, points = qnum_to_key[r["question_number"]]
+            if r["option"] == correct_option:
+                group_scores[qnum_to_group[r["question_number"]]] += points
+        writer.writerow(
+            [s["student_id_confirmed"] or ""] + [group_scores[g] for g in groups] + [sum(group_scores.values())]
+        )
+
+    return Response(
+        buf.getvalue(),
+        mimetype="text/csv",
+        headers={"Content-Disposition": f"attachment; filename=batch_{batch_id}_group_totals.csv"},
     )

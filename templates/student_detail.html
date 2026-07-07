@@ -47,9 +47,12 @@
     黄色でなくても、画像を見て違うと思ったら自由に選び直してください。
     画像を確認した結果「無回答／無効のままで正しい」と判断した場合は、「確認済みにする」を押してください。
   </p>
+  {% if questions|selectattr('is_active', 'equalto', false)|list %}
+  <p class="hint">Q{{ active_question_count }}までがこの試験の有効範囲です。それ以降はグレーアウトして選択できません。</p>
+  {% endif %}
   <div class="question-list">
   {% for q in questions %}
-    <div class="qrow {{ 'ambiguous' if q.is_ambiguous else '' }}">
+    <div class="qrow {{ 'ambiguous' if q.is_ambiguous else '' }} {{ 'inactive' if not q.is_active else '' }}">
       <span class="qnum">Q{{ q.qnum }}</span>
       <span class="raw-marks">
         {% if student.has_canonical %}
@@ -60,17 +63,20 @@
         {% endif %}
       </span>
       <span class="arrow">→</span>
-      <select class="answer-override" data-student-id="{{ student.id }}" data-qnum="{{ q.qnum }}">
+      <select class="answer-override" data-student-id="{{ student.id }}" data-qnum="{{ q.qnum }}" {{ 'disabled' if not q.is_active else '' }}>
         <option value="" {{ 'selected' if q.option is none else '' }}>無回答</option>
         {% for i in range(1, 6) %}
         <option value="{{ i }}" {{ 'selected' if q.option == i else '' }}>{{ option_symbols[i-1] }}</option>
         {% endfor %}
       </select>
+      {% if not q.is_active %}
+      <span class="hint">対象外</span>
+      {% endif %}
       {% if q.is_ambiguous %}
         {% if q.reviewed %}
         <span class="resolved-badge">確認済み</span>
         {% else %}
-        <button type="button" class="btn-confirm-row" data-student-id="{{ student.id }}" data-qnum="{{ q.qnum }}">確認済みにする</button>
+        <button type="button" class="btn-confirm-row" data-student-id="{{ student.id }}" data-qnum="{{ q.qnum }}" {{ 'disabled' if not q.is_active else '' }}>確認済みにする</button>
         {% endif %}
       {% endif %}
       <span class="save-status"></span>

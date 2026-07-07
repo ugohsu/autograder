@@ -30,6 +30,34 @@ def max_score(graded):
     return sum(pts for _, pts in graded.values())
 
 
+def load_full_answer_keys(db, batch_id, active_count):
+    """有効範囲（Q1〜active_count）内の設問ごとの正答キー行。correct_option が
+    NULLの行も含めて返す（CSVエクスポート形式(1)(2)の充足判定に使うため、
+    「設定済みだが正答未定」と「行自体が存在しない」を区別できる必要がある）。"""
+    rows = db.execute(
+        "SELECT question_number, correct_option, points, group_number FROM answer_keys "
+        "WHERE batch_id = ? AND question_number <= ?",
+        (batch_id, active_count),
+    ).fetchall()
+    return {r["question_number"]: r for r in rows}
+
+
+def is_fully_graded(key_rows, active_count):
+    """有効範囲の全設問に正答が設定されているか。"""
+    return all(
+        key_rows.get(q) is not None and key_rows[q]["correct_option"] is not None
+        for q in range(1, active_count + 1)
+    )
+
+
+def is_fully_grouped(key_rows, active_count):
+    """有効範囲の全設問に大問番号が設定されているか。"""
+    return all(
+        key_rows.get(q) is not None and key_rows[q]["group_number"] is not None
+        for q in range(1, active_count + 1)
+    )
+
+
 def score_answers(graded, answer_rows):
     """answer_rows: question_number/option を持つ行の列（1人の学生ぶん）。"""
     score = 0.0

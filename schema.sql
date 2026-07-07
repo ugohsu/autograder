@@ -1,9 +1,13 @@
+-- active_question_count: この試験で実際に使った設問数（Q1〜この番号までが対象）。
+-- NULL は「未設定＝全問（TOTAL_QUESTIONS）が対象」を意味する。設問の解答選択・
+-- 採点集計・CSV出力はこの範囲を超えた設問を無視する。
 CREATE TABLE IF NOT EXISTS batches (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     original_filename TEXT NOT NULL,
     uploaded_at TEXT NOT NULL DEFAULT (datetime('now')),
     dpi INTEGER NOT NULL,
-    note TEXT
+    note TEXT,
+    active_question_count INTEGER
 );
 
 CREATE TABLE IF NOT EXISTS students (
