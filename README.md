@@ -10,7 +10,7 @@
 
 - Docker が動く環境
   - **Windows**: WSL2 を導入し、その中に Docker Engine を直接インストール（`curl -fsSL https://get.docker.com | sh`）。詳しい手順は [`docs/windows-setup.md`](docs/windows-setup.md) を参照
-  - **Mac**: [Colima](https://github.com/abiosoft/colima) を利用（`brew install colima docker docker-compose` → `colima start`）
+  - **Mac**: [Colima](https://github.com/abiosoft/colima) を利用（`brew install colima docker docker-compose` → `colima start`）。詳しい手順は [`docs/mac-setup.md`](docs/mac-setup.md) を参照
 - スキャナ（ScanSnap 等、自動送り対応のもの。片面読み取りで十分）
 
 ---
