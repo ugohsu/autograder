@@ -28,26 +28,27 @@
   {% endif %}
   <table class="detail-table">
     <tr>
-      <th>氏名（手書き）</th>
+      <th>氏名</th>
       <td>
         {% if student.has_name_image %}
         <img src="{{ url_for('batch.student_image', student_id=student.id, kind='name') }}" alt="氏名" class="handwriting-img">
         {% else %}<span class="hint">画像なし</span>{% endif %}
+        <div class="confirm-row">
+          <input type="text" class="student-name-input" value="{{ student.name_confirmed or '' }}" data-student-id="{{ student.id }}">
+          <span class="save-status"></span>
+        </div>
       </td>
     </tr>
     <tr>
-      <th>学籍番号（手書き参考）</th>
+      <th>学籍番号</th>
       <td>
         {% if student.has_id_image %}
         <img src="{{ url_for('batch.student_image', student_id=student.id, kind='id') }}" alt="学籍番号" class="handwriting-img">
         {% else %}<span class="hint">画像なし</span>{% endif %}
-      </td>
-    </tr>
-    <tr>
-      <th>学籍番号（確認・修正）</th>
-      <td>
-        <input type="text" class="student-id-input" value="{{ student.student_id_confirmed or '' }}" data-student-id="{{ student.id }}">
-        <span class="save-status"></span>
+        <div class="confirm-row">
+          <input type="text" class="student-id-input" value="{{ student.student_id_confirmed or '' }}" data-student-id="{{ student.id }}">
+          <span class="save-status"></span>
+        </div>
       </td>
     </tr>
   </table>

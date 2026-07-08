@@ -50,6 +50,14 @@
   {% elif not group_totals_csv_available %}
   <p class="hint">「大問別得点」形式は、有効範囲の全設問に大問番号も設定されると利用できます。</p>
   {% endif %}
+  <div class="csv-download-group">
+    <a class="button" href="{{ url_for('batch.handwriting_images_zip', batch_id=batch.id) }}">氏名・学籍番号 画像一覧ダウンロード（ZIP）</a>
+  </div>
+  <p class="hint">
+    氏名・学籍番号の手書き部分だけを一覧画像（1枚20人前後・複数枚に分割）にまとめたZIPです。
+    ウェブチャット型のAIに画像として渡し、書き起こしの参考にする用途を想定しています。
+    読み取ってもらった結果は<a href="{{ url_for('roster_import.import_page', batch_id=batch.id) }}">名簿AIインポート</a>から取り込めます。
+  </p>
 </section>
 
 <section class="card">
@@ -57,9 +65,8 @@
     <thead>
       <tr>
         <th>#</th>
-        <th>氏名（手書き）</th>
-        <th>学籍番号（手書き参考）</th>
-        <th>学籍番号（確認・修正）</th>
+        <th>氏名</th>
+        <th>学籍番号</th>
         <th>解答の要約</th>
         {% if is_graded %}<th>得点</th>{% endif %}
       </tr>
@@ -70,26 +77,30 @@
       <tr class="clickable-row {{ 'row-error' if s.error else '' }}"
           data-href="{{ url_for('batch.student_detail', batch_id=batch.id, student_id=s.id) }}">
         <td>{{ s.page_index + 1 }}</td>
-        <td>
+        <td class="no-navigate">
           {% if s.has_name_image %}
           <img src="{{ url_for('batch.student_image', student_id=s.id, kind='name') }}" alt="氏名" class="handwriting-img">
           {% else %}
           <span class="hint">画像なし</span>
           {% endif %}
+          <div class="confirm-row">
+            <input type="text" class="student-name-input" value="{{ s.name_confirmed or '' }}" data-student-id="{{ s.id }}">
+            <span class="save-status"></span>
+          </div>
         </td>
-        <td>
+        <td class="no-navigate">
           {% if s.has_id_image %}
           <img src="{{ url_for('batch.student_image', student_id=s.id, kind='id') }}" alt="学籍番号" class="handwriting-img">
           {% else %}
           <span class="hint">画像なし</span>
           {% endif %}
-        </td>
-        <td class="no-navigate">
-          <input type="text" class="student-id-input" value="{{ s.student_id_confirmed or '' }}" data-student-id="{{ s.id }}">
-          <span class="save-status"></span>
-          {% if s.error %}
-          <div class="badge badge-danger" title="{{ s.error }}">読み取り失敗</div>
-          {% endif %}
+          <div class="confirm-row">
+            <input type="text" class="student-id-input" value="{{ s.student_id_confirmed or '' }}" data-student-id="{{ s.id }}">
+            <span class="save-status"></span>
+            {% if s.error %}
+            <div class="badge badge-danger" title="{{ s.error }}">読み取り失敗</div>
+            {% endif %}
+          </div>
         </td>
         <td class="answer-summary">
           {% if summary %}

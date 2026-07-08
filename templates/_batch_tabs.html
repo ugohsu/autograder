@@ -4,5 +4,7 @@
   <a class="batch-tab {{ 'active' if request.endpoint == 'answer_key.edit_answer_key' else '' }}"
      href="{{ url_for('answer_key.edit_answer_key', batch_id=batch.id) }}">正答・配点</a>
   <a class="batch-tab {{ 'active' if request.endpoint == 'answer_key.import_page' else '' }}"
-     href="{{ url_for('answer_key.import_page', batch_id=batch.id) }}">AIインポート</a>
+     href="{{ url_for('answer_key.import_page', batch_id=batch.id) }}">正答AIインポート</a>
+  <a class="batch-tab {{ 'active' if request.endpoint == 'roster_import.import_page' else '' }}"
+     href="{{ url_for('roster_import.import_page', batch_id=batch.id) }}">名簿AIインポート</a>
 </nav>

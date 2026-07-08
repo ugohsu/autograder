@@ -16,6 +16,7 @@ CREATE TABLE IF NOT EXISTS students (
     page_index INTEGER NOT NULL,
     student_id_read TEXT,
     student_id_confirmed TEXT,
+    name_confirmed TEXT,
     name_image BLOB,
     id_image BLOB,
     canonical_image BLOB,

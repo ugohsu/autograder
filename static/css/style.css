@@ -223,8 +223,9 @@ input[type="text"]:focus {
   border-color: var(--accent);
 }
 
-.student-id-input { width: 11em; }
+.student-id-input, .student-name-input { width: 11em; }
 .save-status { font-size: 12px; color: var(--success); margin-left: 6px; }
+.confirm-row { margin-top: 4px; }
 
 .results-table tr.clickable-row { cursor: pointer; }
 .results-table tr.clickable-row:hover td { background: var(--row-hover); }

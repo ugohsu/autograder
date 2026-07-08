@@ -1,5 +1,6 @@
 import csv
 import io
+import zipfile
 
 import cv2
 import numpy as np
@@ -15,7 +16,7 @@ from blueprints.answer_key import (
     score_answers,
 )
 from helpers import OPTION_SYMBOLS, get_db
-from pipeline import layout, preprocess
+from pipeline import handwriting_sheet, layout, preprocess
 
 batch_bp = Blueprint("batch", __name__)
 
@@ -35,7 +36,7 @@ def view_batch(batch_id):
     active_count = effective_question_count(batch)
 
     students = db.execute(
-        "SELECT id, page_index, student_id_read, student_id_confirmed, error, "
+        "SELECT id, page_index, student_id_read, student_id_confirmed, name_confirmed, error, "
         "name_image IS NOT NULL AS has_name_image, id_image IS NOT NULL AS has_id_image "
         "FROM students WHERE batch_id = ? ORDER BY page_index",
         (batch_id,),
@@ -88,7 +89,7 @@ def student_detail(batch_id, student_id):
     db = get_db()
     batch = db.execute("SELECT * FROM batches WHERE id = ?", (batch_id,)).fetchone()
     student = db.execute(
-        "SELECT id, page_index, student_id_read, student_id_confirmed, error, "
+        "SELECT id, page_index, student_id_read, student_id_confirmed, name_confirmed, error, "
         "name_image IS NOT NULL AS has_name_image, id_image IS NOT NULL AS has_id_image, "
         "canonical_image IS NOT NULL AS has_canonical "
         "FROM students WHERE id = ? AND batch_id = ?",
@@ -208,6 +209,21 @@ def update_student_id(batch_id, student_id):
     return jsonify({"ok": True, "student_id": new_id})
 
 
+@batch_bp.post("/batch/<int:batch_id>/student/<int:student_id>/name")
+def update_student_name(batch_id, student_id):
+    payload = request.get_json(silent=True) or {}
+    new_name = str(payload.get("name", "")).strip()
+    db = get_db()
+    cur = db.execute(
+        "UPDATE students SET name_confirmed = ? WHERE id = ? AND batch_id = ?",
+        (new_name, student_id, batch_id),
+    )
+    db.commit()
+    if cur.rowcount == 0:
+        abort(404)
+    return jsonify({"ok": True, "name": new_name})
+
+
 @batch_bp.post("/batch/<int:batch_id>/student/<int:student_id>/answer/<int:question_number>")
 def update_answer(batch_id, student_id, question_number):
     payload = request.get_json(silent=True) or {}
@@ -242,6 +258,54 @@ def student_image(student_id, kind):
     if row is None or row["img"] is None:
         abort(404)
     return send_file(io.BytesIO(row["img"]), mimetype="image/png")
+
+
+@batch_bp.get("/batch/<int:batch_id>/handwriting_images.zip")
+def handwriting_images_zip(batch_id):
+    """氏名・学籍番号の手書き画像一覧をチャット型AIへの書き起こし依頼用にPNGへまとめ、
+    人数が多い場合は複数ページに分割してZIPで一括ダウンロードできるようにする。"""
+    db = get_db()
+    batch = db.execute("SELECT * FROM batches WHERE id = ?", (batch_id,)).fetchone()
+    if batch is None:
+        abort(404)
+
+    students = db.execute(
+        "SELECT page_index, name_image, id_image FROM students WHERE batch_id = ? ORDER BY page_index",
+        (batch_id,),
+    ).fetchall()
+    if not students:
+        return jsonify({"error": "この試験には学生データがありません"}), 400
+
+    def decode(blob):
+        if blob is None:
+            return None
+        return cv2.imdecode(np.frombuffer(blob, dtype=np.uint8), cv2.IMREAD_GRAYSCALE)
+
+    rows = [
+        {
+            "seq": s["page_index"] + 1,
+            "name_image": decode(s["name_image"]),
+            "id_image": decode(s["id_image"]),
+        }
+        for s in students
+    ]
+
+    pages = handwriting_sheet.build_pages(rows)
+
+    zip_basename = f"batch_{batch_id}_handwriting"
+    buf = io.BytesIO()
+    with zipfile.ZipFile(buf, "w", zipfile.ZIP_DEFLATED) as zf:
+        for i in range(0, len(rows), handwriting_sheet.DEFAULT_PER_PAGE):
+            chunk = rows[i:i + handwriting_sheet.DEFAULT_PER_PAGE]
+            start_seq, end_seq = chunk[0]["seq"], chunk[-1]["seq"]
+            page_bytes = pages[i // handwriting_sheet.DEFAULT_PER_PAGE]
+            zf.writestr(f"{zip_basename}/{zip_basename}_no{start_seq:03d}-{end_seq:03d}.png", page_bytes)
+    buf.seek(0)
+
+    return send_file(
+        buf, mimetype="application/zip", as_attachment=True,
+        download_name=f"{zip_basename}.zip",
+    )
 
 
 @batch_bp.get("/batch/<int:batch_id>/student/<int:student_id>/answer_image/<int:question_number>")

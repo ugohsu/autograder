@@ -15,7 +15,7 @@
       <span class="brand-dot"></span> 答案採点支援
     </a>
     <nav class="side-nav">
-      <a class="side-link {{ 'active' if request.endpoint == 'upload.index' or request.endpoint.startswith('batch.') or request.endpoint.startswith('answer_key.') else '' }}"
+      <a class="side-link {{ 'active' if request.endpoint == 'upload.index' or request.endpoint.startswith('batch.') or request.endpoint.startswith('answer_key.') or request.endpoint.startswith('roster_import.') else '' }}"
          href="{{ url_for('upload.index') }}">答案読み取り・採点</a>
       <a class="side-link {{ 'active' if request.endpoint.startswith('answersheet.') else '' }}"
          href="{{ url_for('answersheet.list_answersheets') }}">解答用紙編集・ダウンロード</a>

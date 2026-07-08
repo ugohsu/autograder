@@ -18,6 +18,10 @@ def _migrate(conn):
     if "active_question_count" not in cols:
         conn.execute("ALTER TABLE batches ADD COLUMN active_question_count INTEGER")
 
+    student_cols = {row["name"] for row in conn.execute("PRAGMA table_info(students)")}
+    if "name_confirmed" not in student_cols:
+        conn.execute("ALTER TABLE students ADD COLUMN name_confirmed TEXT")
+
 
 def get_db():
     if "db" not in g:

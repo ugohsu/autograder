@@ -1,7 +1,7 @@
 import os
 
 import markdown as markdown_lib
-from flask import Blueprint, abort, current_app, jsonify, render_template, request
+from flask import Blueprint, abort, current_app, jsonify, render_template, request, url_for
 
 from helpers import OPTION_SYMBOLS, get_db
 from pipeline import layout
@@ -343,4 +343,8 @@ def spec_page():
     with open(path, encoding="utf-8") as f:
         text = f.read()
     spec_html = markdown_lib.markdown(text, extensions=["tables", "fenced_code"])
-    return render_template("answer_key_spec.html", spec_html=spec_html)
+    return render_template(
+        "ai_import_spec.html", spec_html=spec_html,
+        spec_title="正答キー AIインポート仕様書",
+        spec_download_url=url_for("static", filename="docs/answer_key_import_spec.md"),
+    )

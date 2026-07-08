@@ -12,24 +12,29 @@ function flashStatus(el, text, ms = 1500) {
   if (ms) setTimeout(() => { el.textContent = ""; }, ms);
 }
 
-document.querySelectorAll(".student-id-input").forEach((input) => {
-  input.addEventListener("change", async () => {
-    const studentId = input.dataset.studentId;
-    const status = input.parentElement.querySelector(".save-status");
-    flashStatus(status, "保存中…", 0);
-    try {
-      const res = await fetch(`/batch/${window.BATCH_ID}/student/${studentId}/id`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ student_id: input.value }),
-      });
-      if (!res.ok) throw new Error("save failed");
-      flashStatus(status, "保存済み");
-    } catch (e) {
-      flashStatus(status, "保存失敗");
-    }
+function wireConfirmInput(selector, buildUrl, bodyKey) {
+  document.querySelectorAll(selector).forEach((input) => {
+    input.addEventListener("change", async () => {
+      const studentId = input.dataset.studentId;
+      const status = input.parentElement.querySelector(".save-status");
+      flashStatus(status, "保存中…", 0);
+      try {
+        const res = await fetch(buildUrl(studentId), {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ [bodyKey]: input.value }),
+        });
+        if (!res.ok) throw new Error("save failed");
+        flashStatus(status, "保存済み");
+      } catch (e) {
+        flashStatus(status, "保存失敗");
+      }
+    });
   });
-});
+}
+
+wireConfirmInput(".student-id-input", (id) => `/batch/${window.BATCH_ID}/student/${id}/id`, "student_id");
+wireConfirmInput(".student-name-input", (id) => `/batch/${window.BATCH_ID}/student/${id}/name`, "name");
 
 document.querySelectorAll(".batch-note-input").forEach((input) => {
   input.addEventListener("change", async () => {

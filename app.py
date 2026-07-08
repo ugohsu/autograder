@@ -17,11 +17,13 @@ def create_app():
     from blueprints.upload import upload_bp
     from blueprints.batch import batch_bp
     from blueprints.answer_key import answer_key_bp
+    from blueprints.roster_import import roster_bp
     from blueprints.answersheet import answersheet_bp
 
     app.register_blueprint(upload_bp)
     app.register_blueprint(batch_bp)
     app.register_blueprint(answer_key_bp)
+    app.register_blueprint(roster_bp)
     app.register_blueprint(answersheet_bp)
 
     return app
