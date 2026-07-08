@@ -26,6 +26,13 @@ brew --version
 brew install colima docker docker-compose
 ```
 
+Homebrew版の `docker-compose` は、そのままでは `docker compose`（サブコマンド）として認識されません。以下のコマンドで Docker CLI のプラグインディレクトリにシンボリックリンクを作成してください。
+
+```bash
+mkdir -p ~/.docker/cli-plugins
+ln -sfn "$(brew --prefix)/opt/docker-compose/bin/docker-compose" ~/.docker/cli-plugins/docker-compose
+```
+
 ## 3. Colima の起動
 
 ```bash
@@ -58,6 +65,7 @@ colima start
 ## トラブルシューティング
 
 * **`Cannot connect to the Docker daemon` と出る場合:** Colimaが起動していません。`colima start` を実行してから、再度 `sh start.sh` を試してください。
+* **`docker: 'compose' is not a docker command.` と出る場合:** 2で案内したシンボリックリンクの作成ができていません。上記のコマンドを実行してから、再度 `sh start.sh` を試してください。
 * **Macを再起動した場合:** Colimaは自動起動しないため、再起動後は改めて `colima start` を実行してください。
 * **Homebrew自体が壊れている場合（`brew`コマンドがエラーを出す、`brew doctor`で解決しない等）:** 1の公式インストールスクリプトを再実行すると、Homebrewの再インストール・修復ができます。それでも解決しない場合は、`/opt/homebrew`（Apple Silicon）または `/usr/local/Homebrew`（Intel）ごと削除してから再インストールしてください。
 * **以前 Docker Desktop を導入していた場合:** ポート等が競合することがあるため、Docker Desktopを終了（またはアンインストール）してから `colima start` を試してください。
