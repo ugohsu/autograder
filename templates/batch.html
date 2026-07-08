@@ -77,24 +77,24 @@
       <tr class="clickable-row {{ 'row-error' if s.error else '' }}"
           data-href="{{ url_for('batch.student_detail', batch_id=batch.id, student_id=s.id) }}">
         <td>{{ s.page_index + 1 }}</td>
-        <td class="no-navigate">
+        <td>
           {% if s.has_name_image %}
           <img src="{{ url_for('batch.student_image', student_id=s.id, kind='name') }}" alt="氏名" class="handwriting-img">
           {% else %}
           <span class="hint">画像なし</span>
           {% endif %}
-          <div class="confirm-row">
+          <div class="confirm-row no-navigate">
             <input type="text" class="student-name-input" value="{{ s.name_confirmed or '' }}" data-student-id="{{ s.id }}">
             <span class="save-status"></span>
           </div>
         </td>
-        <td class="no-navigate">
+        <td>
           {% if s.has_id_image %}
           <img src="{{ url_for('batch.student_image', student_id=s.id, kind='id') }}" alt="学籍番号" class="handwriting-img">
           {% else %}
           <span class="hint">画像なし</span>
           {% endif %}
-          <div class="confirm-row">
+          <div class="confirm-row no-navigate">
             <input type="text" class="student-id-input" value="{{ s.student_id_confirmed or '' }}" data-student-id="{{ s.id }}">
             <span class="save-status"></span>
             {% if s.error %}
