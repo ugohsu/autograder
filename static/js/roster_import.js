@@ -129,6 +129,11 @@ function rowHtml(row) {
   else if (row.existing) badges.push('<span class="badge badge-update">更新</span>');
   else badges.push('<span class="badge badge-new">新規</span>');
 
+  const markId = row.mark_student_id;
+  const aiId = row.cleaned.student_id;
+  const idMismatch = markId != null && aiId != null && markId !== aiId;
+  if (idMismatch) badges.push('<span class="badge badge-warning">学籍番号相違</span>');
+
   const seqLabel = row.cleaned.seq != null ? `#${row.cleaned.seq}` : `#${row.index + 1}`;
 
   return `
@@ -145,10 +150,25 @@ function rowHtml(row) {
         ${fieldHtml(row, "student_id", "学籍番号")}
       </div>
       ${row.existing ? `<p class="hint">現在の登録: 氏名「${escapeHtml(row.existing.name) || "―"}」／学籍番号「${escapeHtml(row.existing.student_id) || "―"}」</p>` : ""}
+      ${idMismatch ? `
+        <div class="alert alert-warning">
+          学籍番号がマークシート読み取り値と異なります（マークシート:「${escapeHtml(markId)}」／今回の入力:「${escapeHtml(aiId)}」）。
+          <button type="button" class="button-warning btn-use-mark-id" data-idx="${row.index}">マークシートの学籍番号を採用</button>
+        </div>
+      ` : ""}
       ${row.errors.length ? `<div class="alert alert-error">${row.errors.map(escapeHtml).join("<br>")}</div>` : ""}
     </div>
   `;
 }
+
+previewListEl.addEventListener("click", (e) => {
+  if (!e.target.classList.contains("btn-use-mark-id")) return;
+  const idx = Number(e.target.dataset.idx);
+  if (Number.isNaN(idx)) return;
+  const row = previewRows[idx];
+  row.cleaned.student_id = row.mark_student_id;
+  renderPreview();
+});
 
 previewListEl.addEventListener("change", (e) => {
   const idx = Number(e.target.dataset.idx);

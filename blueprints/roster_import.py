@@ -65,7 +65,8 @@ def import_preview(batch_id):
         return jsonify({"error": "roster は配列である必要があります"}), 400
 
     student_rows = db.execute(
-        "SELECT id, page_index, name_confirmed, student_id_confirmed FROM students WHERE batch_id = ?",
+        "SELECT id, page_index, name_confirmed, student_id_confirmed, student_id_read "
+        "FROM students WHERE batch_id = ?",
         (batch_id,),
     ).fetchall()
     by_seq = {r["page_index"] + 1: r for r in student_rows}
@@ -101,8 +102,10 @@ def import_preview(batch_id):
             errors.append(f"通し番号 {seq} に該当する受験生が見つかりません")
 
         cur_existing = None
+        mark_student_id = None
         if student is not None:
             cur_existing = {"name": student["name_confirmed"], "student_id": student["student_id_confirmed"]}
+            mark_student_id = student["student_id_read"]
         no_change = cur_existing is not None and all(
             cur_existing.get(f) == cleaned[f] for f in ("name", "student_id")
         )
@@ -118,6 +121,9 @@ def import_preview(batch_id):
             "existing": cur_existing,
             "no_change": no_change,
             "default_checked": len(errors) == 0 and not no_change,
+            # マークシート（OMR）で読み取られた学籍番号。AIが読み取った学籍番号と食い違う場合に
+            # フロント側で警告表示・採用ボタンを出すために渡す。
+            "mark_student_id": mark_student_id,
         })
 
     return jsonify({"rows": rows})

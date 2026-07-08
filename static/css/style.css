@@ -413,6 +413,20 @@ input[type="text"]:focus {
 .alert { padding: 10px 14px; border-radius: 10px; margin-bottom: 14px; font-size: 13.5px; }
 .alert-error { background: #fdecea; color: var(--danger); }
 .alert-success { background: #e8f5e9; color: #2e7d32; }
+.alert-warning { background: var(--warning-bg); color: var(--warning-fg); }
+
+.button-warning {
+  font: inherit;
+  font-size: 12px;
+  padding: 4px 12px;
+  margin-left: 8px;
+  border: 1px solid var(--warning-fg);
+  border-radius: 12px;
+  background: transparent;
+  color: var(--warning-fg);
+  cursor: pointer;
+}
+.button-warning:hover { background: rgba(0, 0, 0, 0.04); }
 
 .import-row { margin-bottom: 12px; }
 .import-row .card-header { margin-bottom: 8px; }
